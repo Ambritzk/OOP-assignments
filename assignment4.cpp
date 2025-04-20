@@ -1,5 +1,19 @@
 #include<iostream>
 using namespace std;
+class arrey {
+public:
+	int *a;
+	int size;
+	arrey() {
+		a = nullptr;
+		size = 0;
+	}
+	arrey(int ar[], int s) {
+		a = ar;
+		size = s;
+	}
+
+};
 class contact{
 private:
 	int** number;
@@ -94,14 +108,20 @@ public:
 				first = a.substr(0, i);
 				last = a.substr(i + 1, (a.length() - first.length() - 1));
 				frst = false;
-			}																				 
+			}
 
+			if (a[i] == '\0' && frst) {
+				frst = false;
+			}
+		}
+		if (first.empty() && last.empty()) {
+			return (name == a);
 		}
 		if (name.length() < first.length() + last.length()) {
 						return false;
 					
 		}
-		bool conditionOne = name.substr(0, first.length()) == first;		// ni*er
+		bool conditionOne = name.substr(0, first.length()) == first;
 		bool conditionTwo = name.substr(name.length() - last.length()) == last;
 		return (conditionOne && conditionTwo);
 	}
@@ -256,7 +276,35 @@ public:
 		return same;
 	}
 
+	bool operator-(arrey & arr) {
+		for (int i = 0; i < 4; i++) {
+			if (number[i] == nullptr || size[i] != arr.size) {
+				continue;
+			}
+			bool same = true;
+			for (int j = 0; j < size[i]; j++) {
+				if (number[i][j] != arr.a[j]) {
+					same = false;
+					continue;
+				}
+			}
 
+			if (same) {
+				number[i] = nullptr;
+				size[i] = 0;
+			}
+		}
+		int count_nums = 0;
+		for (int i = 0; i < 4; i++) {
+			if (number[i] != nullptr) {
+				count_nums++;
+			}
+		}
+		if (count_nums > 0) {
+			return false;
+		}
+		return true;
+	}
 	void print() {
 		if (!(this->name.empty())) {
 			cout << endl << name << ":\nnumbers:\n";
@@ -298,6 +346,9 @@ public:
 
 class phonebook {
 private:
+	friend void operator-(phonebook& a, arrey& num);
+	friend void operator-(arrey& num, phonebook& a);
+	friend void operator-(string nem, phonebook& a);
 	contact* list;
 	int capacity;
 	int contacts;
@@ -305,7 +356,7 @@ public:
 	phonebook() {
 		list = new contact[10];
 		capacity = 10;
-		contacts = 4;
+		contacts = 0;
 	}
 
 	phonebook(phonebook& b) { //cpy
@@ -382,7 +433,10 @@ public:
 	}
 
 	void shrink() {
-		if (contacts < capacity / 2) {
+		if (contacts == 0) {
+			capacity = 0;
+		}
+		else if (contacts < capacity / 2) {
 			int new_capacity = capacity / 2;
 			contact* new_list = new contact[new_capacity];
 
@@ -407,7 +461,7 @@ public:
 		cout << endl << "contact has been added";
 	}
 
-	void operator-(contact& a) {
+	void operator-(contact a) {
 		bool deleted = false;
 		for (int i = 0; i < contacts; i++) {
 			if (list[i] == a) {
@@ -434,6 +488,11 @@ public:
 		cout << "capacity: " << capacity << endl;
 		cout << endl << "------------------------";
 		
+		if (contacts == 0) {
+			cout << "\nNo contacts to show :(";
+			return;
+		}
+		
 		cout << "Contacts:\n";
 
 		for (int i = 0; i < contacts; i++) {
@@ -446,7 +505,7 @@ public:
 		cin >> choice;
 
 		if (choice > 0 && choice <= contacts) {
-			list[choice + 1].print();
+			list[choice - 1].print();
 		}
 
 
@@ -458,6 +517,16 @@ public:
 				if (list[i] == nem) {
 					cout << "Contact found:\n";
 					list[i].print();
+				}
+			}
+		}
+	}
+
+	void operator-(string nem) {
+		for (int i = contacts - 1; i >= 0; i--) {
+			if (!(nem.empty())) {
+				if (list[i] == nem) {
+					*this - list[i];
 				}
 			}
 		}
@@ -477,21 +546,77 @@ public:
 };
 
 
+void operator-(phonebook& a, arrey& num) {
+	for (int i = a.contacts - 1; i >= 0; i--) {
+
+		if (a.list[i].AreEqual(num.a, num.size)) {
+			bool empty = a.list[i] - num;
+
+			if (empty) {
+				a - a.list[i];
+			}
+		}
+	}
+}
+
+void operator-(arrey& num, phonebook& a) {
+	for (int i = a.contacts - 1; i >= 0; i--) {
+
+		if (a.list[i].AreEqual(num.a, num.size)) {
+			bool empty = a.list[i] - num;
+
+			if (empty) {
+				a - a.list[i];
+			}
+		}
+	}
+}
+
+void operator-(string nem, phonebook& a) {
+	for (int i = a.contacts - 1; i >= 0; i--) {
+		if (!(nem.empty())) {
+			if (a.list[i] == nem) {
+				a - a.list[i];
+			}
+		}
+	}
+}
 int main() {
+
+	phonebook sig;
+	//sig.get();
+
+	sig.shrink();
+	//sig.get();
+
+	//system("pause");
 	contact c1("abdul");
 //	contact cecil("cecil");
 
-	phonebook sig;
 
 	sig + c1;
 
 	sig.get();
 
-	int a[] = { 1,2,3,4,5 };
+	contact c2("Ahsar");
+	sig + c2;
+
+	sig.get();
+
+	/*int a[] = {1,2};
+	arrey ar(a, 2);
+	*/
+//	sig - ar;
+
+	sig - "abdul";
+	sig.get();
+	
+
+	/*int a[] = { 1,2,3,4,5 };
 	sig.searchbycontactNumber(a, 5);
 
 	cout << "Now searching name:\n";
-	sig.searchbycontactname("a*l");
+	sig.searchbycontactname("a*l");*/
 
 
 
