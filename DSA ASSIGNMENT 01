@@ -1,0 +1,383 @@
+#include<iostream>
+using namespace std;
+// Node structure for Ride Requests
+//making the Ride class also allowed me to make the generic linklist class into a template class, as I could assign Ride as a type
+class Ride {
+private:
+	string customerName;
+	string pickup;
+	string dropoff;
+	float fare;
+public:
+	Ride() {
+		customerName = "";
+		this->pickup = "";
+		dropoff = "";
+		this->fare = 0;
+	}
+	Ride(string cname, string pickup, string drop, float fare) {
+
+		customerName = cname;
+		this->pickup = pickup;
+		dropoff = drop;
+		this->fare = fare;
+	}
+	//Getters
+	string getCustomerName() {
+		return customerName;
+	}
+	string getDropOffLocation() {
+		return dropoff;
+	}
+	string getPickUPLocation() {
+		return pickup;
+	}
+	float getFare() {
+		return fare;
+	}
+
+	void Display() {
+		cout << endl << "Ride Request Details:\n";
+		cout << "\nCustomer Name: " << getCustomerName() << endl;
+		cout << "\nPickup Location: " << getPickUPLocation() << endl;
+		cout << "\nDropoff Location: " << getDropOffLocation() << endl;
+		cout << "\nFare: " << getFare() << endl;
+	}
+};
+class RideRequest: public Ride {
+	//making a template for displaying the lists makes sense cosidering the only major difference in the code will be
+	//of the object's own display function
+	friend ostream& operator<<(ostream& a, RideRequest obj);
+private:
+	int requestID;
+public:
+
+	RideRequest() {
+		requestID = 0;
+	}
+	RideRequest(int id, string cname, string pickup, string drop, float fare): Ride(cname,pickup,drop,fare) {
+		requestID = id;
+	}
+
+	int getRideRequestID() {
+		return requestID;
+	}
+
+	void Display() {
+		cout << "\nRequest ID: " << requestID << endl;
+		Ride::Display();// this saves sooo much time tho
+	}
+
+
+
+};
+
+// Node structure for Active Rides
+struct ActiveRide {
+	int rideID;
+	string customerName;
+	string driverName;
+	string pickup;
+	string dropoff;
+	float fare;
+};
+// Node structure for Ride History
+struct RideHistory {
+	int rideID;
+	string customerName;
+	string driverName;
+	string pickup;
+	string dropoff;
+	float fare;
+	string status; // Completed or Canceled
+
+};
+template<typename T>
+class Node {
+public:
+	T obj;
+	Node<T>* next;
+
+
+	Node() {
+		next = nullptr;
+	}
+	Node(T val) {
+		obj = val;
+		next = nullptr;
+	}
+
+};
+
+
+// class contains generic functions that the three lists can use, and their functionalities are not that differnt.
+//why can I not make header and tail pointers?
+//Because the type is defined by the child class
+// If I make this into a class template, I'll need the data type when I make the child class
+//One solution could be to make a single parent class
+//Children wil contain members unique to them
+
+//Making a parent class won't work, the problem lies with the node
+template <typename T>
+class GenericLinkList {
+private:
+	Node<T>* header;
+	Node<T>* tail;
+public:
+
+	Node<T>* getHeader() {
+		return header;
+	}
+
+	Node<T>* getTail() {
+		return tail;
+	}
+
+	//Generic functions
+	// why did you not make this into a class?
+	GenericLinkList() {
+		header = tail = nullptr;
+	}
+
+	bool isEmpty() {
+		return header == nullptr;
+	}
+
+	void AddAtEnd(T obj) {
+		Node<T>* temp = new Node<T>(obj);
+		if (header == nullptr) {
+			header = tail = temp;
+		}
+		else {
+			tail->next = temp;
+			tail = temp;
+		}
+	}
+
+
+	void Display() {
+		if (header == nullptr) {
+			cout << endl << "Empty!" << endl;
+			return;
+		}
+		Node<T>* temp = header;
+		cout << endl;
+		while (temp->next != nullptr) {
+			temp->Display();
+			cout << endl << "-----------------------";
+			temp = temp->next;
+		}
+		temp->Display();
+
+		// wonder why you're having to keep defining all these different versions of functions that were supposed to be generic
+		//How many of these will be required?
+
+	}
+
+	~GenericLinkList() {
+		if (isEmpty()) {
+			return;
+		}
+		Node<T>* current = header->next;
+		Node<T>* prev = header;
+		if (header->next == nullptr) {
+			delete header;
+
+			header = tail = nullptr;
+		}
+		else {
+
+			while (current->next != nullptr) {
+				delete prev;
+				prev = current;
+				current = current->next;
+
+
+			}
+		}
+
+	}
+
+
+	void DeleteByValue(int val) {
+		cout << endl << "Hallo";
+	}
+
+	void DeleteFromEnd() {
+		if (isEmpty()) {
+			cout << endl << "Empty" << endl;
+			return;
+		}
+
+		if (header->next == nullptr) {
+			delete header;
+			header = tail = nullptr;
+			return;
+		}
+		Node<T>* temp = header;
+		while (temp->next != tail) {
+			temp = temp->next;
+		}
+
+		delete tail;
+		tail = temp;
+		tail->next = nullptr;
+
+	}
+
+
+
+	//int SearchElement(t val) {
+
+	//	if (isEmpty()) {
+	//		return -1;
+	//	}
+
+	//	if (header->data == val) {
+	//		return 0;
+	//	}
+	//	else {
+	//		Node<t>* temp = header->next;
+	//		int i = 1;
+	//		while (temp->next != nullptr) {
+	//			if (temp->data == val) {
+	//				return i;
+	//			}
+
+	//			i++;
+	//			temp = temp->next;
+	//		}
+	//		if (temp->data == val) {
+	//			return i;
+	//		}
+
+	//	}
+
+};
+
+template<>
+void GenericLinkList<RideRequest>::DeleteByValue(int val) {
+	if (isEmpty()) {
+		cout << endl << "List Empty! Cannot delete";
+		return;
+	}
+	if (header->obj.getRideRequestID() == val) {
+		if (header->next == nullptr) {
+			delete header;
+			header = tail = nullptr;
+			return;
+		}
+		else {
+			Node<RideRequest>* temp = header;
+			header = header->next;
+			delete temp;
+		}
+
+	}
+	else if (tail->obj.getRideRequestID() == val) {
+		DeleteFromEnd();
+	}
+	else {
+		Node<RideRequest>* curr = header->next;
+		Node<RideRequest>* prev = header;
+
+		while (curr != nullptr) {
+			if (curr->obj.getRideRequestID() == val) {
+				prev->next = curr->next;
+				delete curr;
+				cout << endl << "Deleted";
+				return;
+			}
+			prev = curr;
+			curr = curr->next;
+		}
+
+		cout << endl << "Value not found!";
+
+	}
+
+}
+
+
+void GenericLinkList<RideRequest>::Display() {
+
+}
+
+
+
+class RideNowSystem{
+private:
+	//Node<RideRequest>* requestHead;
+	//Node< ActiveRide>* activeHead;
+	//Node< RideHistory>* historyHead;
+
+	//Node<RideRequest>* requestTail;
+	//Node<ActiveRide>* activeTail;
+	//Node<RideHistory>* historyTail;
+	GenericLinkList<RideRequest> RideRequest_list;
+public:
+
+	///
+	// ========== Ride Request Functions ==========
+	void addRideRequest(int id, string cname, string pickup, string drop, float fare) {
+		RideRequest_list.AddAtEnd(RideRequest(id, cname, pickup, drop, fare));
+	}
+	void displayRideRequests() {
+		RideRequest_list.Display();
+	}
+
+
+	void cancelRideRequest(int id) {
+		RideRequest_list.DeleteByValue(id);
+
+	}
+
+
+	//
+	//// ========== Active Ride Functions ==========National University of Computer and Emerging Sciences,
+	//void assignRideToDriver(int id, string driverName);
+	//void displayActiveRides();
+	//// ========== Ride History Functions ==========
+	//void completeRide(int id, bool completed);
+	//void displayRideHistory();
+	//void searchRideByCustomer(string cname);
+	//void calculateTotalRevenue();
+	//// ========== Advanced Functionalities ==========
+	//void sortRideHistoryByFare();
+	//void reverseRideHistory();
+	//void detectAndMergeDuplicateRequests();
+	//void deleteOldRidesByDate(string date); // Extra challenge
+	//void findLongestRide();
+
+};
+
+int main() {
+	RideNowSystem rido;
+
+
+	rido.addRideRequest(1, "yours truly", "idk", "yo mama's house", 12345);
+	rido.addRideRequest(2, "yours truly", "rubueu", "yo mama's house", 12345);
+	rido.addRideRequest(3, "yours truly", "afasdf", "yo mama's house", 12345);
+	//rido.addRideRequest(1, "Haseeb Ninga", "idk", "yo mama's house", 43242);
+
+	rido.displayRideRequests();
+
+	rido.cancelRideRequest(3);
+
+	rido.displayRideRequests();
+}
+
+ostream& operator<<(ostream& a, RideRequest obj)
+{
+	a << endl << "Ride Request Details:\n";
+	a << "\nRequest ID: " << obj.requestID << endl;
+	a << "\nCustomer Name: " << obj.getCustomerName() << endl;
+	a << "\nPickup Location: " << obj.getPickUPLocation() << endl;
+	a << "\nDropoff Location: " << obj.getDropOffLocation() << endl;
+	a << "\nFare: " << obj.getFare() << endl;
+
+	return a;
+}
+
+// I am being forced to make these different functions for the template class which kinda beats the point
+//
