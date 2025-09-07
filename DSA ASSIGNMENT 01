@@ -1,7 +1,7 @@
 #include<iostream>
+#include<cstdlib>
 using namespace std;
-// Node structure for Ride Requests
-//making the Ride class also allowed me to make the generic linklist class into a template class, as I could assign Ride as a type
+//Node structure for Ride Requests
 class Ride {
 private:
 	string customerName;
@@ -36,8 +36,7 @@ public:
 		return fare;
 	}
 
-	void Display() {
-		cout << endl << "Ride Request Details:\n";
+	virtual void Display() {
 		cout << "\nCustomer Name: " << getCustomerName() << endl;
 		cout << "\nPickup Location: " << getPickUPLocation() << endl;
 		cout << "\nDropoff Location: " << getDropOffLocation() << endl;
@@ -47,7 +46,6 @@ public:
 class RideRequest: public Ride {
 	//making a template for displaying the lists makes sense cosidering the only major difference in the code will be
 	//of the object's own display function
-	friend ostream& operator<<(ostream& a, RideRequest obj);
 private:
 	int requestID;
 public:
@@ -63,35 +61,107 @@ public:
 		return requestID;
 	}
 
-	void Display() {
+	void Display() override{
 		cout << "\nRequest ID: " << requestID << endl;
 		Ride::Display();// this saves sooo much time tho
 	}
 
 
-
 };
 
 // Node structure for Active Rides
-struct ActiveRide {
+class ActiveRide: public Ride {
 	int rideID;
-	string customerName;
 	string driverName;
-	string pickup;
-	string dropoff;
-	float fare;
-};
-// Node structure for Ride History
-struct RideHistory {
-	int rideID;
-	string customerName;
-	string driverName;
-	string pickup;
-	string dropoff;
-	float fare;
-	string status; // Completed or Canceled
+public:
+	// active rides objectss are created when a request is accepted
+	//its existence depends upon RideRequest
+	//ActiveRide(int id, string driverName, string cname, string pickup, string drop, float fare) : Ride(cname, pickup, drop, fare){
+	//	rideID = id;
+	//	this->driverName = driverName;
+	//}
+	ActiveRide() : Ride() {
+		rideID = 0;
+		driverName = "";
+	}
+	ActiveRide(int id, string driverName,RideRequest& obj) : Ride(obj.getCustomerName(), obj.getDropOffLocation(), obj.getDropOffLocation(), obj.getFare()) {
+		rideID = id;
+		this->driverName = driverName;
+	}
+
+
+	void Display() override{
+		cout << endl << "Ride ID: " << rideID << endl << "Driver Name: " << driverName << endl;
+		Ride::Display();
+
+	}
+
+	int getrideID() {
+		return rideID;
+	}
+	string getdriverName() {
+		return driverName;
+	}
 
 };
+// Node structure for Ride History
+class RideHistory: public Ride {
+	int rideID;
+	string driverName;
+	string status; // Completed or Canceled
+public:
+	RideHistory() : Ride() {
+		rideID = 0;
+		driverName = "";
+		status = "";
+	}
+	RideHistory(string status, int id, string driverName, string cname, string pickup, string drop, float fare) : Ride(cname, pickup, drop, fare) {
+		rideID = id;
+		this->driverName = driverName;
+		this->status = status;
+	}
+
+	RideHistory(int id,RideRequest& obj): Ride(obj.getCustomerName(),obj.getPickUPLocation(),obj.getDropOffLocation(), obj.getFare() ) {
+		// status will be cancelled
+		//driver will not be assigned
+		rideID = id;
+		status = "cancelled";
+		driverName = "Not assigned";
+	}
+
+
+	RideHistory(bool status, ActiveRide& obj) : Ride(obj.getCustomerName(), obj.getPickUPLocation(), obj.getDropOffLocation(), obj.getFare()) {
+		// status will be cancelled
+		//driver will not be assigned
+		rideID = obj.getrideID();
+		this->status = status;
+		driverName = obj.getdriverName();
+	}
+
+	void Display() override {
+		cout << endl << "Ride ID: " << rideID << endl << "Driver Name: " << driverName << endl << "Ride status: " << status << endl;
+		Ride::Display();
+
+	}
+
+	int getrideID() {
+		return rideID;
+	}
+	string getdriverName() {
+		return driverName;
+	}
+	string getStatus() {
+		return status;
+	}
+
+
+};
+
+
+
+
+
+
 template<typename T>
 class Node {
 public:
@@ -107,6 +177,7 @@ public:
 		next = nullptr;
 	}
 
+
 };
 
 
@@ -116,34 +187,18 @@ public:
 // If I make this into a class template, I'll need the data type when I make the child class
 //One solution could be to make a single parent class
 //Children wil contain members unique to them
-
-//Making a parent class won't work, the problem lies with the node
-template <typename T>
 class GenericLinkList {
-private:
-	Node<T>* header;
-	Node<T>* tail;
-public:
-
-	Node<T>* getHeader() {
-		return header;
-	}
-
-	Node<T>* getTail() {
-		return tail;
-	}
-
+protected:
 	//Generic functions
 	// why did you not make this into a class?
-	GenericLinkList() {
-		header = tail = nullptr;
-	}
-
-	bool isEmpty() {
+	// because making this into a class, had me making specialized functions that defeated the purpose of making it into a class
+	template<typename T>
+	bool isEmpty(Node<T>* header) {
 		return header == nullptr;
 	}
 
-	void AddAtEnd(T obj) {
+	template<typename T>
+	void AddAtEnd(Node<T>*& header, Node<T>*& tail, T obj) {
 		Node<T>* temp = new Node<T>(obj);
 		if (header == nullptr) {
 			header = tail = temp;
@@ -153,29 +208,36 @@ public:
 			tail = temp;
 		}
 	}
+	template<typename T>
+	void Display(Node<T>* header, Node<T>* tail) {
+		static_assert(
+			std::is_same_v<T, RideRequest> ||
+			std::is_same_v<T, ActiveRide> ||
+			std::is_same_v<T, RideHistory>,
+			"Type not supported"
+			);
 
 
-	void Display() {
 		if (header == nullptr) {
 			cout << endl << "Empty!" << endl;
 			return;
 		}
 		Node<T>* temp = header;
-		cout << endl;
-		while (temp->next != nullptr) {
-			temp->Display();
-			cout << endl << "-----------------------";
+		Ride* ptr;
+		while (temp != nullptr) {
+			ptr = &temp->obj;
+			ptr->Display();
+
 			temp = temp->next;
 		}
-		temp->Display();
-
-		// wonder why you're having to keep defining all these different versions of functions that were supposed to be generic
-		//How many of these will be required?
 
 	}
 
-	~GenericLinkList() {
-		if (isEmpty()) {
+
+
+	template<typename T>
+	void Destructor(Node<T>*& header, Node<T>*& tail) {
+		if (isEmpty(header)) {
 			return;
 		}
 		Node<T>* current = header->next;
@@ -196,15 +258,16 @@ public:
 			}
 		}
 
+
+
+
+
+
 	}
 
-
-	void DeleteByValue(int val) {
-		cout << endl << "Hallo";
-	}
-
-	void DeleteFromEnd() {
-		if (isEmpty()) {
+	template<typename T>
+	void DeleteFromEnd(Node<T>*& header, Node<T>*& tail) {
+		if (isEmpty(header)) {
 			cout << endl << "Empty" << endl;
 			return;
 		}
@@ -225,123 +288,222 @@ public:
 
 	}
 
+	/*template<typename T>
+	int SearchElement(t val) {
 
+		if (isEmpty()) {
+			return -1;
+		}
 
-	//int SearchElement(t val) {
+		if (header->data == val) {
+			return 0;
+		}
+		else {
+			Node<t>* temp = header->next;
+			int i = 1;
+			while (temp->next != nullptr) {
+				if (temp->data == val) {
+					return i;
+				}
 
-	//	if (isEmpty()) {
-	//		return -1;
-	//	}
+				i++;
+				temp = temp->next;
+			}
+			if (temp->data == val) {
+				return i;
+			}
 
-	//	if (header->data == val) {
-	//		return 0;
-	//	}
-	//	else {
-	//		Node<t>* temp = header->next;
-	//		int i = 1;
-	//		while (temp->next != nullptr) {
-	//			if (temp->data == val) {
-	//				return i;
-	//			}
+		}
 
-	//			i++;
-	//			temp = temp->next;
-	//		}
-	//		if (temp->data == val) {
-	//			return i;
-	//		}
+		return -1;
+	}*/
 
-	//	}
+	// Helper functions that cannot be generalized
 
 };
 
-template<>
-void GenericLinkList<RideRequest>::DeleteByValue(int val) {
-	if (isEmpty()) {
+class RideNowSystem : protected GenericLinkList {
+private:
+	Node<RideRequest>* requestHead;
+	Node< ActiveRide>* activeHead;
+	Node< RideHistory>* historyHead;
+
+	Node<RideRequest>* requestTail;
+	Node<ActiveRide>* activeTail;
+	Node<RideHistory>* historyTail;
+	
+
+	Node<RideRequest>* getRequest(int id) {
+		if (isEmpty(requestHead)) {
+			cout << endl << "Error! List empty";
+		}
+		else if (requestHead->obj.getRideRequestID() == id) {
+			return requestHead;
+		}
+		else if (requestTail->obj.getRideRequestID() == id) {
+			return requestTail;
+		}
+		else {
+			if (requestHead->next == nullptr) {
+				cout << endl << "List does not contain value";
+				return nullptr;
+			}
+			Node<RideRequest>* temp = requestHead->next;
+			while (temp->next != nullptr) {
+				if (temp->obj.getRideRequestID() == id) {
+					return temp;
+				}
+				temp = temp->next;
+			}
+
+			return nullptr;
+
+
+
+		}
+	}
+	Node<ActiveRide>* getActiveRides(int id) {
+		if (isEmpty(activeHead)) {
+			cout << endl << "Error! List empty";
+		}
+		else if (requestHead->obj.getRideRequestID() == id) {
+			return activeHead;
+		}
+		else if (requestTail->obj.getRideRequestID() == id) {
+			return activeTail;
+		}
+		else {
+			if (requestHead->next == nullptr) {
+				cout << endl << "List does not contain value";
+				return nullptr;
+			}
+			Node<ActiveRide>* temp = activeHead->next;
+			while (temp->next != nullptr) {
+				if (temp->obj.getrideID() == id) {
+					return temp;
+				}
+				temp = temp->next;
+			}
+
+			return nullptr;
+
+
+
+		}
+	}
+
+public:
+	RideNowSystem() {
+		requestHead = requestTail = nullptr;
+		activeHead = activeTail = nullptr;
+		historyHead = historyTail = nullptr;
+
+	}
+
+
+
+
+
+	///
+	// ========== Ride Request Functions ==========
+	void addRideRequest(int id, string cname, string pickup, string drop, float fare) {
+		AddAtEnd<RideRequest>(requestHead, requestTail, RideRequest(id, cname, pickup, drop, fare));
+	}
+	void displayRideRequests() {
+		Display<RideRequest>(requestHead, requestTail);
+	}
+
+	void cancelRideRequest(int id) {// did not make generic function because the paremeters for delete by value are different
+	if (isEmpty(requestHead)) {
 		cout << endl << "List Empty! Cannot delete";
 		return;
 	}
-	if (header->obj.getRideRequestID() == val) {
-		if (header->next == nullptr) {
-			delete header;
-			header = tail = nullptr;
-			return;
+
+	bool deleted = false;
+
+	if (requestHead->obj.getRideRequestID() == id) {
+		AddAtEnd<RideHistory>(historyHead, historyTail, RideHistory(-1, requestHead->obj));
+		if (requestHead->next == nullptr) {
+			delete requestHead;
+			requestHead = requestTail = nullptr;
+			deleted = true;
 		}
 		else {
-			Node<RideRequest>* temp = header;
-			header = header->next;
+			Node<RideRequest>* temp = requestHead;
+			requestHead = requestHead->next;
 			delete temp;
 		}
 
 	}
-	else if (tail->obj.getRideRequestID() == val) {
-		DeleteFromEnd();
+	else if (requestTail->obj.getRideRequestID() == id) {
+		AddAtEnd<RideHistory>(historyHead, historyTail, RideHistory(-1, requestHead->obj));
+		DeleteFromEnd<RideRequest>(requestHead, requestTail);
 	}
 	else {
-		Node<RideRequest>* curr = header->next;
-		Node<RideRequest>* prev = header;
+		Node<RideRequest>* curr = requestHead->next;
+		Node<RideRequest>* prev = requestHead;
 
 		while (curr != nullptr) {
-			if (curr->obj.getRideRequestID() == val) {
+			if (curr->obj.getRideRequestID() == id) {
 				prev->next = curr->next;
+				AddAtEnd<RideHistory>(historyHead, historyTail, RideHistory(-1, requestHead->obj));
 				delete curr;
-				cout << endl << "Deleted";
+				cout << endl << "Request Cancelled";
 				return;
 			}
 			prev = curr;
 			curr = curr->next;
 		}
-
 		cout << endl << "Value not found!";
 
 	}
 
-}
-
-
-void GenericLinkList<RideRequest>::Display() {
-
-}
-
-
-
-class RideNowSystem{
-private:
-	//Node<RideRequest>* requestHead;
-	//Node< ActiveRide>* activeHead;
-	//Node< RideHistory>* historyHead;
-
-	//Node<RideRequest>* requestTail;
-	//Node<ActiveRide>* activeTail;
-	//Node<RideHistory>* historyTail;
-	GenericLinkList<RideRequest> RideRequest_list;
-public:
-
-	///
-	// ========== Ride Request Functions ==========
-	void addRideRequest(int id, string cname, string pickup, string drop, float fare) {
-		RideRequest_list.AddAtEnd(RideRequest(id, cname, pickup, drop, fare));
-	}
-	void displayRideRequests() {
-		RideRequest_list.Display();
-	}
-
-
-	void cancelRideRequest(int id) {
-		RideRequest_list.DeleteByValue(id);
 
 	}
 
 
 	//
 	//// ========== Active Ride Functions ==========National University of Computer and Emerging Sciences,
-	//void assignRideToDriver(int id, string driverName);
-	//void displayActiveRides();
+	void assignRideToDriver(int id, string driverName) {
+		Node<RideRequest>* temp = getRequest(id);
+		if (temp != nullptr) {
+			AddAtEnd<ActiveRide>(activeHead, activeTail, ActiveRide(id, driverName, temp->obj));
+		}
+		else {
+			cout << endl << " Ride does not exist!";
+		}
+	}
+	void displayActiveRides() {
+		cout << endl << "Active Rides List:\n";
+		Display<ActiveRide>(activeHead, activeTail);
+	}
 	//// ========== Ride History Functions ==========
-	//void completeRide(int id, bool completed);
-	//void displayRideHistory();
+	void completeRide(int id, bool completed) {
+		Node<ActiveRide>* temp = getActiveRides(id);
+		AddAtEnd<RideHistory>(historyHead, historyTail, RideHistory());
+	}
+	void displayRideHistory() {
+		Display<RideHistory>(historyHead, historyTail);
+	}
 	//void searchRideByCustomer(string cname);
-	//void calculateTotalRevenue();
+	void calculateTotalRevenue() { // this could've been float but the skeleton made it void
+		float rev = 0;
+		if (isEmpty(historyHead)) {
+			cout << endl << "Total Revenue: " << rev;
+		}
+		else if (historyHead->next == nullptr) {
+			rev = historyHead->obj.getFare();
+		}
+		else {
+			Node<RideHistory>* temp = historyHead;
+			while (temp->next != nullptr) {
+				rev += temp->obj.getFare();
+				temp = temp->next;
+			}
+		}
+
+		cout << endl << "Total Revenue: " << rev;
+	}
 	//// ========== Advanced Functionalities ==========
 	//void sortRideHistoryByFare();
 	//void reverseRideHistory();
@@ -349,35 +511,142 @@ public:
 	//void deleteOldRidesByDate(string date); // Extra challenge
 	//void findLongestRide();
 
+	~RideNowSystem() {
+		Destructor<RideRequest>(requestHead, requestTail);
+	}
 };
 
 int main() {
-	RideNowSystem rido;
+	//RideNowSystem rido;
 
 
-	rido.addRideRequest(1, "yours truly", "idk", "yo mama's house", 12345);
-	rido.addRideRequest(2, "yours truly", "rubueu", "yo mama's house", 12345);
-	rido.addRideRequest(3, "yours truly", "afasdf", "yo mama's house", 12345);
-	//rido.addRideRequest(1, "Haseeb Ninga", "idk", "yo mama's house", 43242);
+	//rido.addRideRequest(1, "yours truly", "idk", "yo mama's house", 12345);
+	//rido.addRideRequest(2, "Haseeb Ninga", "idk", "yo mama's house", 43242);
+	//rido.addRideRequest(3, "Haseeb Ninasdfsafdasdfga", "idk", "yo mama's house", 43242);
 
-	rido.displayRideRequests();
+	//rido.displayRideRequests();
 
-	rido.cancelRideRequest(3);
 
-	rido.displayRideRequests();
+	//rido.cancelRideRequest(2);
+	//rido.cancelRideRequest(1);
+	//rido.cancelRideRequest(3);
+
+	//rido.displayRideHistory();
+
+	//rido.calculateTotalRevenue();
+
+
+	////rido.assignRideToDriver(1, "Moom");
+
+	////rido.displayActiveRides();
+
+
+
+
+
+
+	RideNowSystem system2;
+	int choice;
+	do {
+		cout << "\n====== RideNow System Menu ======\n";
+		cout << "1. Add Ride Request\n";
+		cout << "2. Cancel Ride Request\n";
+		cout << "3. Assign Ride to Driver\n";
+		cout << "4. Complete Ride\n";
+		cout << "5. Display Current Ride Requests\n";
+		cout << "6. Display Active Rides\n";
+		cout << "7. Display Ride History\n";
+		cout << "8. Search Rides by Customer\n";
+		cout << "9. Calculate Total Revenue\n";
+		cout << "10. Sort Ride History by Fare\n";
+		cout << "11. Reverse Ride History\n";
+		cout << "12. Detect & Merge Duplicate Ride Requests\n";
+		cout << "13. Delete Old Rides by Date\n";
+		cout << "14. Find Longest Ride\n";
+		cout << "15. Exit\n";
+		cout << "Enter choice: ";
+		cin >> choice;
+		system("CLS");
+		switch (choice) {
+		case 1: {
+			int id; string cname, pickup, drop; float fare;
+			cout << "Enter ID, Customer Name, Pickup, Drop, Fare: ";
+			cin >> id >> cname >> pickup >> drop >> fare;
+			system2.addRideRequest(id, cname, pickup, drop, fare);
+			break;
+		}
+		case 2: {
+			int id;
+			cout << "Enter Ride ID to cancel: ";
+			cin >> id;
+			system2.cancelRideRequest(id);
+			break;
+		}
+		case 3: {
+			int id; string dname;
+			cout << "Enter Ride ID and Driver Name: ";
+			cin >> id >> dname;
+			system2.assignRideToDriver(id, dname);
+			break;
+		}
+		//case 4: {
+		//	int id; bool completed;
+		//	cout << "Enter Ride ID and (1 for Completed, 0 forCanceled): ";
+		//	cin >> id >> completed;
+		//	system.completeRide(id, completed);
+		//	break;
+		//}
+		case 5: system2.displayRideRequests(); break;
+		case 6: system2.displayActiveRides(); break;
+		case 7: system2.displayRideHistory(); break;
+		/*case 8: {
+			string cname;
+			cout << "Enter Customer Name: ";
+			cin >> cname;
+			system.searchRideByCustomer(cname);
+			break;
+		}
+		case 9: system.calculateTotalRevenue(); break;
+		case 10: system.sortRideHistoryByFare(); break;
+		case 11: system.reverseRideHistory(); break;
+		case 12: system.detectAndMergeDuplicateRequests(); break;
+		case 13: {
+			string date;
+			cout << "Enter Date (DD/MM/YYYY): ";
+			cin >> date;
+			system.deleteOldRidesByDate(date);
+			break;
+		}
+		case 14: system.findLongestRide(); break;
+		*/
+		case 15: cout << "Exiting...\n"; break;
+		default: cout << "Invalid choice!\n";
+		}
+	} while (choice != 15);
+	return 0;
+
+	//ensure that when rides transfer between one another, they are removed from the source
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
-
-ostream& operator<<(ostream& a, RideRequest obj)
-{
-	a << endl << "Ride Request Details:\n";
-	a << "\nRequest ID: " << obj.requestID << endl;
-	a << "\nCustomer Name: " << obj.getCustomerName() << endl;
-	a << "\nPickup Location: " << obj.getPickUPLocation() << endl;
-	a << "\nDropoff Location: " << obj.getDropOffLocation() << endl;
-	a << "\nFare: " << obj.getFare() << endl;
-
-	return a;
-}
-
-// I am being forced to make these different functions for the template class which kinda beats the point
-//
