@@ -1,7 +1,6 @@
 #include<iostream>
 #include<cstdlib>
 using namespace std;
-//Node structure for Ride Requests
 
 
 class Date {
@@ -46,6 +45,7 @@ public:
 
 
 };
+
 class Ride {
 private:
 	string customerName;
@@ -97,8 +97,6 @@ public:
 	}
 };
 class RideRequest : public Ride {
-	//making a template for displaying the lists makes sense cosidering the only major difference in the code will be
-	//of the object's own display function
 	int requestID;
 public:
 
@@ -115,7 +113,7 @@ public:
 
 	void Display() override {
 		cout << "\n----------------\nRequest ID: " << requestID << endl;
-		Ride::Display();// this saves sooo much time tho
+		Ride::Display();
 	}
 
 
@@ -126,12 +124,6 @@ class ActiveRide : public Ride {
 	int rideID;
 	string driverName;
 public:
-	// active rides objectss are created when a request is accepted
-	//its existence depends upon RideRequest
-	//ActiveRide(int id, string driverName, string cname, string pickup, string drop, float fare) : Ride(cname, pickup, drop, fare){
-	//	rideID = id;
-	//	this->driverName = driverName;
-	//}
 	ActiveRide() : Ride() {
 		rideID = 0;
 		driverName = "";
@@ -176,7 +168,7 @@ public:
 	RideHistory(int id, RideRequest& obj) : Ride(obj.getCustomerName(), obj.getPickUPLocation(), obj.getDropOffLocation(), obj.getFare(), obj.getDate()) {
 		// status will be cancelled
 		//driver will not be assigned
-		rideID = id;
+		rideID = obj.getRideRequestID();
 		status = 0;
 		driverName = "Not assigned";
 	}
@@ -185,7 +177,7 @@ public:
 	RideHistory(bool status, int id, ActiveRide& obj) : Ride(obj.getCustomerName(), obj.getPickUPLocation(), obj.getDropOffLocation(), obj.getFare(), obj.getDate()) {
 		// status will be cancelled
 		//driver will not be assigned
-		rideID = id;
+		rideID = obj.getrideID();
 		this->status = status;
 		driverName = obj.getdriverName();
 	}
@@ -216,28 +208,34 @@ public:
 
 
 
-template<typename T>
-class Node {
-public:
-	T obj;
-	Node<T>* next;
 
-
-	Node() {
-		next = nullptr;
-	}
-	Node(T val) {
-		obj = val;
-		next = nullptr;
-	}
-
-
-
-};
 
 
 class GenericLinkList {
 protected:
+	template<typename T>
+	class Node {
+	public:
+		T obj;
+		Node<T>* next;
+
+
+		Node() {
+			next = nullptr;
+		}
+		Node(T val) {
+			obj = val;
+			next = nullptr;
+		}
+	};
+
+
+
+
+
+
+
+
 	template<typename T>
 	bool isEmpty(Node<T>* header) {
 		return header == nullptr;
@@ -276,12 +274,7 @@ protected:
 
 	template<typename T>
 	void Display(Node<T>* header, Node<T>* tail) {
-		static_assert(
-			is_same_v<T, RideRequest> ||
-			is_same_v<T, ActiveRide> ||
-			is_same_v<T, RideHistory>,
-			"Type not supported"
-			);
+		static_assert(is_same_v<T, RideRequest> ||is_same_v<T, ActiveRide> ||is_same_v<T, RideHistory>,"Type not supported");
 
 
 		if (header == nullptr) {
@@ -296,8 +289,6 @@ protected:
 
 			temp = temp->next;
 		}
-		//ptr = &temp->obj;
-		//ptr->Display();
 
 	}
 
@@ -333,17 +324,28 @@ protected:
 
 	}
 
-
-
-
-
-
-	// Helper functions that cannot be generalized
-
 };
+
+template<typename T>
+class Node {
+public:
+	T obj;
+	Node<T>* next;
+
+
+	Node() {
+		next = nullptr;
+	}
+	Node(T val) {
+		obj = val;
+		next = nullptr;
+	}
+};
+
 
 class RideNowSystem : protected GenericLinkList {
 private:
+
 	Node<RideRequest>* requestHead;
 	Node<ActiveRide>* activeHead;
 	Node<RideHistory>* historyHead;
@@ -352,45 +354,19 @@ private:
 	Node<ActiveRide>* activeTail;
 	Node<RideHistory>* historyTail;
 
-
-
-	Node<RideRequest>* getRequest(int id) { // make the delete function here for the time being
-		if (isEmpty(requestHead)) {
-			cout << endl << "Error! List empty";
-		}
-		else if (requestHead->obj.getRideRequestID() == id) {
-			return requestHead;
-		}
-		else if (requestTail->obj.getRideRequestID() == id) {
-			return requestTail;
-		}
-		else {
-			if (requestHead->next == nullptr) {
-				cout << endl << "List does not contain value";
-				return nullptr;
-			}
-			Node<RideRequest>* temp = requestHead->next;
-			while (temp->next != nullptr) {
-				if (temp->obj.getRideRequestID() == id) {
-					return temp;
-				}
-				temp = temp->next;
-			}
-
-			return nullptr;
-
-
-
-		}
-	}
 	Node<RideRequest>* PopRequest(int id) {
 		if (isEmpty(requestHead)) {
 			cout << endl << "Error! List empty";
+			return nullptr;
 		}
 		if (requestHead->obj.getRideRequestID() == id) {
+			Node<RideRequest>* temp = requestHead;
 			if (requestHead->next == nullptr) {
-				Node<RideRequest>* temp = requestHead;
 				requestHead = requestTail = nullptr;
+				return temp;
+			}
+			else {
+				requestHead = temp->next;
 				return temp;
 			}
 		}
@@ -404,8 +380,10 @@ private:
 			while (curr != nullptr) {
 				if (curr->obj.getRideRequestID() == id) {
 					prev->next = curr->next;
-					Node<RideRequest>* temp = curr;
-					return temp;
+					if (requestTail == curr) {
+						requestTail = prev;
+					}
+					return curr;
 				}
 				else {
 					prev = curr;
@@ -447,6 +425,9 @@ private:
 			while (curr != nullptr) {
 				if (curr->obj.getrideID() == id) {
 					prev->next = curr->next;
+					if (curr == activeTail) {
+						activeTail = prev;
+					}
 					return curr;
 				}
 				else {
@@ -454,7 +435,7 @@ private:
 					curr = curr->next;
 				}
 			}
-			cout << endl << "Couldn't  delete";
+			cout << endl << "Couldn't  find ride";
 			return nullptr;
 
 
@@ -559,6 +540,7 @@ public:
 		AddAtEnd<RideRequest>(requestHead, requestTail, RideRequest(id, cname, pickup, drop, fare, date));
 	}
 	void displayRideRequests() {
+		cout << endl << "Ride Requests list:\n";
 		Display<RideRequest>(requestHead, requestTail);
 	}
 
@@ -628,7 +610,11 @@ public:
 		Node<ActiveRide>* temp = getActiveRides(id);
 		if(temp != nullptr){
 			AddAtEnd<RideHistory>(historyHead, historyTail, RideHistory(completed, id, temp->obj));
+			cout << endl << "Ride completion successful";
+			return;
 		}
+		cout << endl <<"Ride completion unsuccessful";
+
 		
 	}
 	void displayRideHistory() {
@@ -654,7 +640,7 @@ public:
 			cout << endl << "Ride not found";
 		}
 	}
-	void calculateTotalRevenue() { // this could've been float but the skeleton made it void
+	void calculateTotalRevenue() {
 		float rev = 0;
 		if (isEmpty(historyHead)) {
 			cout << endl << "Total Revenue: " << rev;
@@ -713,31 +699,26 @@ public:
 	}
 
 
-void deleteOldRidesByDate( Date date) {
+	void deleteOldRidesByDate(Date date) {
 		if (isEmpty(historyHead)) {
 			cout << endl << "List empty!";
 			return;
 		}
-	headlabel:
-		Node<RideHistory>* temp = historyHead;
-		while (temp != nullptr) {
-			if (temp == historyHead && temp->obj.getDate() < date) {
-				DeleteFromStart<RideHistory>(historyHead, historyTail);
-			}
-			else {
-				break;
-			}
+
+		// Step 1: Remove from the start while head is old
+		while (historyHead != nullptr && historyHead->obj.getDate() < date) {
+			DeleteFromStart<RideHistory>(historyHead, historyTail);
 		}
+
 		Node<RideHistory>* prev = historyHead;
-		Node<RideHistory>* curr = nullptr;
-		if(prev != nullptr)curr = prev->next;
+		Node<RideHistory>* curr = (prev != nullptr) ? prev->next : nullptr;
 
 		while (curr != nullptr) {
-			if (historyHead->obj.getDate() < date) {
-				goto headlabel;
-			}
 			if (curr->obj.getDate() < date) {
 				prev->next = curr->next;
+				if (curr == historyTail) {
+					historyTail = prev;
+				}
 				delete curr;
 				curr = prev->next;
 			}
@@ -746,13 +727,13 @@ void deleteOldRidesByDate( Date date) {
 				curr = curr->next;
 			}
 		}
-
-
 	}
+
 	// Extra challenge
 	void findLongestRide() {
 		if (isEmpty(historyHead)) {
 			cout << endl << "No rides";
+			return;
 		}
 		int max = 0;
 		Node<RideHistory>* temp = historyHead;
@@ -787,10 +768,11 @@ void deleteOldRidesByDate( Date date) {
 			Node<RideRequest>* curr = temp->next;
 
 			while (curr != nullptr) {
-				if (curr->obj.getPickUPLocation() == temp->obj.getPickUPLocation() &&
-					curr->obj.getDropOffLocation() == temp->obj.getDropOffLocation() &&
-					curr->obj.getCustomerName() == temp->obj.getCustomerName()) {
+				if (curr->obj.getPickUPLocation() == temp->obj.getPickUPLocation() &&curr->obj.getDropOffLocation() == temp->obj.getDropOffLocation() &&curr->obj.getCustomerName() == temp->obj.getCustomerName()) {
 					prev->next = curr->next;
+					if (curr == requestTail) {
+						prev = requestTail;
+					}
 					delete curr;
 					curr = prev->next;
 				}
@@ -811,25 +793,77 @@ void deleteOldRidesByDate( Date date) {
 		if (!isEmpty(activeHead))Destructor<ActiveRide>(activeHead, activeTail);
 		if (!isEmpty(historyHead))Destructor<RideHistory>(historyHead, historyTail);
 	}
+
+
+
+
 };
 
+
+void IsDateValid(int& date, int& month, int& year) {
+	if (month > 12 || month < 1) {
+		do {
+			cout << endl << "Invalid input. Month must me between 1 - 12";
+			cin >> month;
+
+		} while (month < 1 || month > 12);
+	}
+	if (month % 2 == 0 && month < 7) {
+		if (date > 30) {
+			do {
+				cout << endl << "The date ranges from 1-30. Please choose appropriately";
+				cin >> date;
+			} while (date > 30);
+		}
+	}
+	if (month % 2 != 0 && month <= 7) {
+		if (date > 31) {
+			do {
+				cout << endl << "The date ranges from 1-31. Please choose appropriately";
+				cin >> date;
+			} while (date > 30);
+		}
+	}
+
+	if (month % 2 == 0 && month >= 8 && month) {
+		if (date > 31) {
+			do {
+				cout << endl << "The date ranges from 1-31. Please choose appropriately";
+				cin >> date;
+			} while (date > 31);
+		}
+	}
+	if (month % 2 != 0 && month >= 8 && month) {
+		if (date > 30) {
+			do {
+				cout << endl << "The date ranges from 1-31. Please choose appropriately";
+				cin >> date;
+			} while (date > 30);
+		}
+	}
+
+
+
+	if (year % 2 == 0 && month == 2 && date > 28) {
+		do {
+			cout << endl << "Month 2 consists of 28 days.\nEnter correct date:";
+			cin >> date;
+		} while (date > 28);
+	}
+}
 int main() {
 
 	RideNowSystem system2;
-	system2.addRideRequest(1, "A", "jijij", "dgndlfgn", 55, Date(2,12,2000));
-	system2.addRideRequest(2, "B", "adfasdf", "jfgndfg", 23, Date(3,1,2001));
-	system2.addRideRequest(3, "C", "astolfo", "andfjgn", 99 ,Date(5, 1, 2001));
-	system2.addRideRequest(4, "D", "sdfasdf", "jndfijg", 6, Date(8, 11, 2002));
-	system2.addRideRequest(5, "E", "jijij", "dgndlfgn", 5, Date(9, 1, 2004));
-
-	Date bb(9, 11, 2001);
-	Date flash(1, 2, 2002);
-
-	cout << endl << (flash < bb);
-
-
-
-
+	system2.addRideRequest(1, "Ahmed", "", "dgndlfgn", 55, Date(2,12,2000));
+	system2.addRideRequest(2, "Ali", "adfasdf", "jfgndfg", 23, Date(3,1,2001));
+	system2.addRideRequest(3, "Haseeb", "astolfo", "andfjgn", 99 ,Date(5, 1, 2001));
+	system2.addRideRequest(4, "Dan", "sdfasdf", "jndfijg", 6, Date(8, 11, 2002));
+	system2.addRideRequest(5, "E", "jijij", "dgndlfgn", 5, Date(9, 1, 2003));
+	system2.addRideRequest(6, "Ahmed", "jijij", "dgndlfgn", 55, Date(2, 12, 2003));
+	system2.addRideRequest(7, "B", "adfasdf", "jfsfgdfg", 23, Date(3, 1, 2004));
+	system2.addRideRequest(8, "C", "astolfo", "andfjgn", 99, Date(5, 1, 2005));
+	system2.addRideRequest(9, "D", "sdfasdf", "jndfijg", 6, Date(8, 11, 2005));
+	system2.addRideRequest(10, "E", "jijij", "dgndlfgn", 5, Date(9, 1, 2006));
 
 
 	int choice;
@@ -906,6 +940,7 @@ int main() {
 				cout << "Enter Date (DD/MM/YYYY): ";
 				int day, month, year = 0;
 				cin >> day >> month >> year;
+				IsDateValid(day, month, year);
 				Date date(day, month, year);
 				system2.deleteOldRidesByDate(date);
 				break;
@@ -916,8 +951,6 @@ int main() {
 		}
 	} while (choice != 15);
 	return 0;
-
-	//ensure that when rides transfer between one another, they are removed from the source
 
 
 
