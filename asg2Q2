@@ -1,0 +1,136 @@
+#include<iostream>
+using namespace std;
+template<typename T>
+class steck {
+private:
+
+	int top;
+	int bottom;
+	T* arr;
+	bool isFull() {
+		return ((top + 1) == size);
+	}
+public:
+	int size;
+	steck() {
+		arr = nullptr;
+		size = 0;
+		top = -1;
+		bottom = -1;
+	}
+
+	void push(const T val) {
+		if (arr == nullptr) {
+			arr = new T[++size];
+			arr[++top] = val;
+			return;
+		}
+
+		if (isFull()) {
+			size *= 2;
+			T* temp = new T[size];
+			for (int i = 0; i <= top; i++) {
+				temp[i] = arr[i];
+			}
+
+			if ((++top) < size) {
+				temp[top] = val;
+			}
+
+
+			delete[] arr;
+			arr = temp;
+		}
+		else {
+			arr[++top] = val;
+		}
+
+	}
+
+
+	void pop() {
+		if (isEmpty()) {
+			cout << endl << "Stack already empty!";
+			return;
+		}
+
+		if (top == 0) {
+			delete[] arr;
+			arr = nullptr;
+			size = 0;
+			top = -1;
+			return;
+		}
+
+
+
+
+		if (top - 1 < size / 2) {
+			size /= 2;
+			T* temp = new T[size];
+			top--;
+			if (top < size) {
+				for (int i = 0; i <= top; i++) {
+					temp[i] = arr[i];
+				}
+			}
+
+
+			delete[] arr;
+			arr = temp;
+		}
+		else {
+			top--;
+		}
+
+	}
+
+	int Size() {
+		return top + 1;
+	}
+
+	bool isEmpty() {
+		return top == -1;
+	}
+
+
+	~steck() {
+		if (arr != nullptr) {
+			delete[] arr;
+			arr = nullptr;
+		}
+	}
+};
+
+int main() {
+
+	steck<int> pp;
+	cout << pp.size;
+	pp.push(1);
+
+	cout << pp.size;
+	pp.push(2);
+
+	cout << pp.size;
+	pp.push(3);
+
+	cout << pp.size;
+	pp.push(4);
+
+	cout << pp.size;
+	pp.push(5);
+
+
+
+	pp.pop();
+	cout << endl << pp.size;
+	pp.pop();
+	cout << endl << pp.size;
+	pp.pop();
+	cout << endl << pp.size;
+	pp.pop();
+	cout << endl << pp.size;
+	pp.pop();
+	cout << endl << pp.size;
+	return 0;
+}
