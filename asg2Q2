@@ -3,13 +3,71 @@ using namespace std;
 template<typename T>
 class steck {
 private:
-
 	int top;
 	int bottom;
 	T* arr;
+
+	bool isFlipped = false;
+
 	bool isFull() {
-		return ((top + 1) == size);
+		if (!isFlipped) {
+			int next = (top + 1) % size;
+			return next == bottom;
+		}
+		else {
+			int prev = top - 1;
+			if (prev == -1) {
+				prev = size - 1;
+			}
+			return prev == bottom;
+		}
 	}
+
+
+	void incdec(int& var) {
+		if (isFlipped) {
+			var = (var + 1) & size;
+		}
+		else {
+			--var;
+			if (var == -1) {
+				var = size - 1;
+			}
+		}
+	}
+	void IncreaseSize() {
+		size *= 2;
+		T* temp = new T[size];
+		if (!isFlipped) {
+			for (int i = 0; i <= top; i++) {
+				temp[i] = arr[i];
+			}
+		}
+		else {// if flipped
+			int old_top = top;
+			top = bottom;
+			int i = bottom;
+			while (i != old_top) {
+				temp[top--] = arr[i--];
+
+				if (top == -1) {
+					top = size - 1;
+				}
+
+				if (i == -1) {
+					i = (size / 2)  - 1;
+				}
+
+			}
+			temp[top] = arr[i];
+
+		}
+
+		delete[] arr;
+		arr = temp;
+
+	}
+
 public:
 	int size;
 	steck() {
@@ -23,26 +81,38 @@ public:
 		if (arr == nullptr) {
 			arr = new T[++size];
 			arr[++top] = val;
+			bottom++;
 			return;
 		}
 
 		if (isFull()) {
-			size *= 2;
-			T* temp = new T[size];
-			for (int i = 0; i <= top; i++) {
-				temp[i] = arr[i];
+
+			IncreaseSize();
+			if (!isFlipped) {
+				if ((++top) < size) {
+					arr[top] = val;
+				}
+			}
+			else {
+				arr[--top] = val;
 			}
 
-			if ((++top) < size) {
-				temp[top] = val;
-			}
 
 
-			delete[] arr;
-			arr = temp;
+
+
 		}
 		else {
-			arr[++top] = val;
+			if (!isFlipped) {
+				arr[++top] = val;
+			}
+			else {
+				top--;
+				if (top == -1) {
+					top = size - 1;
+				}
+				arr[top] = val;
+			}
 		}
 
 	}
@@ -54,36 +124,104 @@ public:
 			return;
 		}
 
-		if (top == 0) {
-			delete[] arr;
-			arr = nullptr;
+
+		if (bottom == top) {
+			top = bottom = -1;
 			size = 0;
-			top = -1;
+			arr = nullptr;
 			return;
 		}
 
-
-
-
-		if (top - 1 < size / 2) {
+		int diff = bottom - top;
+		if (abs(diff) < size / 2) {
 			size /= 2;
 			T* temp = new T[size];
-			top--;
-			if (top < size) {
-				for (int i = 0; i <= top; i++) {
-					temp[i] = arr[i];
+			if (!isFlipped) {
+				top--;
+				if (top == -1) {
+					top = size - 1;
 				}
+				else {
+					top = (top + 1) % size;
+				}
+
+
+				bool loop =true;
+				int i = top;
+				while (loop) {
+					temp[i] = arr[i];
+					i--;
+					if (i == -1) {
+						i = size - 1;
+					}
+
+					if (i == bottom) {
+						loop = false;
+					}
+				}
+
+				delete[] arr;
+				arr = temp;
+
+
 			}
 
 
-			delete[] arr;
-			arr = temp;
+
+
+
+
+
+
+
+
+
 		}
 		else {
-			top--;
+			if (!isFlipped) {
+				top--;
+				if (top == -1) {
+					top = size - 1;
+				}
+
+			}
+			else {
+
+				top = (top + 1) % size;
+			}
 		}
 
+
 	}
+
+
+	void Display() {
+		if (arr == nullptr) {
+			return;
+		}
+		cout << endl;
+		int i = top;
+
+		if (isFlipped) {
+			while (i != bottom) {
+				cout << arr[i] << ",";
+				i = (i + 1) % size;
+			}
+		}
+		else {
+			while (i != bottom) {
+				cout << arr[i] << ",";
+				i--;
+				if (i == -1) {
+					i = size - 1;
+				}
+			}
+		}
+
+		cout << arr[i];
+	}
+
+
 
 	int Size() {
 		return top + 1;
@@ -93,6 +231,13 @@ public:
 		return top == -1;
 	}
 
+
+	void FlipSteck() {
+		isFlipped = !isFlipped;
+		int temp = top;
+		top = bottom;
+		bottom = temp;
+	}
 
 	~steck() {
 		if (arr != nullptr) {
@@ -105,32 +250,39 @@ public:
 int main() {
 
 	steck<int> pp;
-	cout << pp.size;
 	pp.push(1);
-
-	cout << pp.size;
+	
 	pp.push(2);
 
-	cout << pp.size;
 	pp.push(3);
 
-	cout << pp.size;
 	pp.push(4);
 
-	cout << pp.size;
 	pp.push(5);
 
 
+	pp.Display();
+
+
+
+	pp.FlipSteck();
+
+	pp.push(6);
+	pp.push(7);
+	pp.push(8);
+
+	pp.Display();
+
+	pp.push(9);
+	pp.Display();
+
 
 	pp.pop();
-	cout << endl << pp.size;
 	pp.pop();
-	cout << endl << pp.size;
 	pp.pop();
-	cout << endl << pp.size;
-	pp.pop();
-	cout << endl << pp.size;
-	pp.pop();
+
+	pp.Display();
+
 	cout << endl << pp.size;
 	return 0;
 }
