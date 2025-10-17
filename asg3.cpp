@@ -586,7 +586,36 @@ public:
 		studentlist.InorderDisplay();
 	}
 
+	bool UpdateStudentData(int OldRollno, int NewRollno, string newfirstname, string newlastname, int newbatch, string newDepartment, float newcgpa) {
+		//first we'll check if the student even exists or not
+		//Then we'll check if the new rollno is the same as the previous or not
+		//in case of the latter, we'll delete that node and insert a new node
 
+		StudentNode* ptr = studentlist.searchElement(OldRollno);
+		if (ptr == nullptr) {
+			return false;
+		}
+		else {
+			if (OldRollno == NewRollno) {
+				ptr->firstname = newfirstname;
+				ptr->lastname = newlastname;
+				ptr->batch = newbatch;
+				ptr->department = newDepartment;
+				ptr->cgpa = newcgpa;
+			}
+			else {
+				studentlist.Delete(OldRollno);
+				studentlist.Insert(NewRollno, StudentNode(NewRollno,newfirstname, newlastname, newbatch,newDepartment, newcgpa));
+			}
+			return true;
+
+
+
+		}
+
+
+
+	}
 
 
 };
@@ -622,7 +651,7 @@ void Menu(StudentList& list) {
 		cin >> choice;
 
 		choice = toupper(choice);
-		int rollnumber, batch = -1;
+		int rollnumber, batch, old, newno = -1;
 		float cgpa = 0;
 		string firstname = "";
 		string lastname = "";
@@ -630,6 +659,7 @@ void Menu(StudentList& list) {
 		system("cls");
 		switch (choice) {
 		case 'I':
+			
 			cout << endl << "Enter first name: ";
 			cin >> firstname;
 			cout << "Enter last name: ";
@@ -646,6 +676,25 @@ void Menu(StudentList& list) {
 			break;
 		case 'P':
 			list.PrintAllStudents();
+			break;
+		case 'U':
+			cout << endl << "Enter old roll number: ";
+			Inputvalidation(old);
+			cout << "Enter new roll number: ";
+			Inputvalidation(rollnumber);
+
+			cout << endl << "Enter new first name: ";
+			cin >> firstname;
+			cout << "Enter new last name: ";
+			cin >> lastname;
+
+			cout << "Enter new Batch: ";
+			Inputvalidation(batch);
+			cout << "Enter new department: ";
+			cin >> department;
+			cout << "Enter new cgpa: ";
+			cin >> cgpa;
+			list.UpdateStudentData(old, newno, firstname, lastname, batch, department, cgpa);
 			break;
 		case 'D':
 			cout << endl << "Enter the roll number of the student you want to remove: ";
