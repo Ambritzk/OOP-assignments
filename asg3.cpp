@@ -1,7 +1,7 @@
 #include <iostream>
 #include<string>
 #include<vector>
-#include <fstream>
+#include<string>
 using namespace std;
 
 template<typename T>
@@ -22,7 +22,7 @@ private:
 			left = nullptr;
 			parent = nullptr;
 		}
-		Node(int key,T value) {
+		Node(int key, T value) {
 			this->key = key;
 			this->value = value;
 			right = nullptr;
@@ -31,34 +31,17 @@ private:
 		}
 	};
 
-
-	void PreorderTraversal(Node* temp) {
-		if (temp != nullptr) {
-			cout << temp->value << "->";
-			PreorderTraversal(temp->left);
-			PreorderTraversal(temp->right);
-		}
-
-	}
-
-
 	void inorderTraversal(Node* temp) {
 		if (temp != nullptr) {
 			inorderTraversal(temp->left);
-			cout << temp->value << "->";
+			cout << temp->value;
 			inorderTraversal(temp->right);
 		}
 
 	}
 
 
-	void postorderTraversal(Node* temp) {
-		if (temp != nullptr) {
-			postorderTraversal(temp->left);
-			postorderTraversal(temp->right);
-			cout << temp->value << "->";
-		}
-	}
+
 
 	void Rotation(Node* temp) {
 		//first determine whether the child is a left child or a right child
@@ -159,9 +142,7 @@ private:
 	}
 
 
-	bool isEmpty() {
-		return root == nullptr;
-	}
+
 
 
 	void DeleteAndGetRight(Node* temp) {
@@ -286,16 +267,28 @@ private:
 		}
 
 
-		levelMembers(list, temp->left,lvl + 1, desired_lvl);
+		levelMembers(list, temp->left, lvl + 1, desired_lvl);
 
-		levelMembers(list, temp->right,lvl + 1, desired_lvl);
+		levelMembers(list, temp->right, lvl + 1, desired_lvl);
 
 
 
 
 	}
 
-	
+
+
+	int getheight(Node* temp) {
+		if (temp == nullptr) {
+			return 0;
+		}
+
+		int left = getheight(temp->left);
+		int right = getheight(temp->right);
+
+		return 1 + max(left, right);
+	}
+
 	Node* root;
 
 
@@ -310,15 +303,6 @@ public:
 	}
 
 
-	void PreorderDisplay() {
-
-		cout << endl;
-		if (isEmpty()) {
-			cout << "Tree is empty";
-			return;
-		}
-		PreorderTraversal(root);
-	}
 
 	void InorderDisplay() {
 		cout << endl;
@@ -328,13 +312,9 @@ public:
 		}
 		inorderTraversal(root);
 	}
-	void PostOrderDisplay() {
-		cout << endl;
-		if (isEmpty()) {
-			cout << "Tree is empty";
-			return;
-		}
-		postorderTraversal(root);
+
+	bool isEmpty() {
+		return root == nullptr;
 	}
 
 
@@ -365,7 +345,7 @@ public:
 
 
 
-	bool Insert(int key,T value) {
+	bool Insert(int key, T value) {
 		if (root == nullptr) {
 			root = new Node(key, value);
 			return true;
@@ -390,7 +370,7 @@ public:
 					temp = temp->left;
 				}
 				else {
-					temp->left = new Node(key,value);
+					temp->left = new Node(key, value);
 					temp->left->parent = temp;
 					Rotation(temp->left);
 					return true;
@@ -402,9 +382,9 @@ public:
 			}
 		}
 	}
-	bool InsertWithoutRotation(int key,T value) {
+	bool InsertWithoutRotation(int key, T value) {
 		if (root == nullptr) {
-			root = new Node(key,value);
+			root = new Node(key, value);
 			return true;
 		}
 
@@ -416,7 +396,7 @@ public:
 					temp = temp->right;
 				}
 				else {
-					temp->right = new Node(key,value);
+					temp->right = new Node(key, value);
 					temp->right->parent = temp;
 					return true;
 				}
@@ -426,7 +406,7 @@ public:
 					temp = temp->left;
 				}
 				else {
-					temp->left = new Node(key,value);
+					temp->left = new Node(key, value);
 					temp->left->parent = temp;
 					return true;
 				}
@@ -443,7 +423,6 @@ public:
 
 	T* searchElement(int key) {
 		if (isEmpty()) {
-			cout << endl << "Tree is empty";
 			return nullptr;
 		}
 		Node* temp = root;
@@ -473,7 +452,6 @@ public:
 
 	bool Delete(int key) {
 		if (isEmpty()) {
-			cout << endl << "Tree is empty";
 			return false;
 		}
 
@@ -502,52 +480,69 @@ public:
 		if (root == nullptr) {
 			return result_list;
 		}
-		levelMembers(&result_list, root, 0,desired_lvl);
+		levelMembers(&result_list, root, 0, desired_lvl);
 		return result_list;
 	}
 
+	int height() {
+		return getheight(root);
 
-
-
-
-
-
+	}
 
 	~BST() {
 		deleteTree(root);
 	}
-};
 
-class StudentList {
+
+	void DisplayLevelWiseMembers() {
+		if (isEmpty()) {
+			cout << endl << "Tree is empty";
+			return;
+		}
+		int height = this->height();
+
+		for (int i = 0; i < height; i++) {
+			vector<T> ptr = this->LevelWiseMembers(i);
+			cout << endl << "Level " << i << " members: ";
+
+			for (auto itr = ptr.begin(); itr != ptr.end(); itr++) {
+				cout << *itr << " ";
+			}
+		}
+
+
+	}
+};
+class students {
 private:
 	class StudentNode {
 	public:
-			int rollnumber;
-			string firstname;
-			string lastname;
-			int batch;
-			string department;
-			float cgpa;
-			friend class StudentList;
-//			friend ostream& operator<<(ostream& os, const StudentList::StudentNode& obj);
+		int rollnumber;
+		string firstname;
+		string lastname;
+		int batch;
+		string department;
+		float cgpa;
+		friend class students;
+		//			friend ostream& operator<<(ostream& os, const students::StudentNode& obj);
 
 
-			StudentNode() {
-				rollnumber = 0;
-				firstname = "";
-				batch = 0;
-				cgpa = 0;
-				lastname = "";
-				department = "";
-			}
-			StudentNode(int roll, string first, string last, int batch, string dept, float cgpa) {
-				rollnumber = roll;
-				firstname = first;
-				lastname = last;
-				this->batch = batch;
-				department = dept;
-				this->cgpa = cgpa;
-			}
+		StudentNode() {
+			rollnumber = 0;
+			firstname = "";
+			batch = 0;
+			cgpa = 0;
+			lastname = "";
+			department = "";
+		}
+		StudentNode(int roll, string first, string last, int batch, string dept, float cgpa) {
+			rollnumber = roll;
+			firstname = first;
+			lastname = last;
+			this->batch = batch;
+			department = dept;
+			this->cgpa = cgpa;
+		}
 
 
 	};
@@ -555,25 +550,20 @@ private:
 
 
 
-	BST<StudentNode> studentlist;
+	BST<StudentNode> students;
 public:
-	friend ostream& operator<<(ostream& os, const StudentList::StudentNode& obj);
+	friend ostream& operator<<(ostream& os, const students::StudentNode& obj);
 	void InsertStudentNode(int roll, string first, string last, int batch, string dept, float cgpa) {
-		studentlist.Insert(roll,StudentNode(roll, first, last, batch, dept, cgpa));
+		students.Insert(roll, StudentNode(roll, first, last, batch, dept, cgpa));
 	}
 
 
-	void DeleteStudent(int roll) {
-		if (studentlist.Delete(roll)) {
-			cout << endl << "Student removed";
-		}
-		else {
-			cout << endl << "Student does not exist";
-		}
+	bool DeleteStudent(int roll) {
+		return students.Delete(roll);
 	}
 
 	void SearchStudent(int roll) {
-		StudentNode* ptr = studentlist.searchElement(roll);
+		StudentNode* ptr = students.searchElement(roll);
 		if (ptr == nullptr) {
 			cout << endl << "Student not found";
 		}
@@ -583,7 +573,7 @@ public:
 	}
 
 	void PrintAllStudents() {
-		studentlist.InorderDisplay();
+		students.InorderDisplay();
 	}
 
 	bool UpdateStudentData(int OldRollno, int NewRollno, string newfirstname, string newlastname, int newbatch, string newDepartment, float newcgpa) {
@@ -591,7 +581,7 @@ public:
 		//Then we'll check if the new rollno is the same as the previous or not
 		//in case of the latter, we'll delete that node and insert a new node
 
-		StudentNode* ptr = studentlist.searchElement(OldRollno);
+		StudentNode* ptr = students.searchElement(OldRollno);
 		if (ptr == nullptr) {
 			return false;
 		}
@@ -604,8 +594,8 @@ public:
 				ptr->cgpa = newcgpa;
 			}
 			else {
-				studentlist.Delete(OldRollno);
-				studentlist.Insert(NewRollno, StudentNode(NewRollno,newfirstname, newlastname, newbatch,newDepartment, newcgpa));
+				students.Delete(OldRollno);
+				students.Insert(NewRollno, StudentNode(NewRollno, newfirstname, newlastname, newbatch, newDepartment, newcgpa));
 			}
 			return true;
 
@@ -619,7 +609,7 @@ public:
 
 
 };
- 
+
 void Inputvalidation(int& var) {
 	while (!(cin >> var)) {
 		cout << endl << "Invalid Roll number.";
@@ -638,8 +628,24 @@ void Inputvalidation(float& var) {
 	}
 }
 
+void ValidateAlphaString(string& st) {
+	bool notalpha = false;
+	do {
+		notalpha = false;
+		for (auto itr = st.begin(); itr != st.end(); itr++) {
+			if (!isalpha(*itr)) {
+				notalpha = true;
+				break;
+			}
+		}
+		if (notalpha) {
+			cout << endl << "Enter string with alphabets only: ";
+			cin >> st;
+		}
+	} while (notalpha);
+}
 
-void Menu(StudentList& list) {
+void Menu(students& list) {
 	char choice;
 	do {
 		cout << endl << "1)Press I to insert a new student";
@@ -649,6 +655,11 @@ void Menu(StudentList& list) {
 		cout << endl << "5)Press E to quit";
 		cout << endl << "Enter: ";
 		cin >> choice;
+		system("cls");
+
+		if (!isalpha(choice)) {
+			cout << endl << "Unrecognized input";
+		}
 
 		choice = toupper(choice);
 		int rollnumber, batch, old, newno = -1;
@@ -656,23 +667,29 @@ void Menu(StudentList& list) {
 		string firstname = "";
 		string lastname = "";
 		string department = "";
-		system("cls");
+		
 		switch (choice) {
 		case 'I':
-			
+
 			cout << endl << "Enter first name: ";
 			cin >> firstname;
+			ValidateAlphaString(firstname);
 			cout << "Enter last name: ";
 			cin >> lastname;
+			ValidateAlphaString(lastname);
+
 			cout << "Enter roll number: ";
 			Inputvalidation(rollnumber);
 			cout << "Enter Batch: ";
 			Inputvalidation(batch);
 			cout << "Enter department: ";
 			cin >> department;
+			ValidateAlphaString(department);
+
+
 			cout << "Enter cgpa: ";
 			cin >> cgpa;
-			list.InsertStudentNode(rollnumber, firstname, lastname, batch, department,cgpa);
+			list.InsertStudentNode(rollnumber, firstname, lastname, batch, department, cgpa);
 			break;
 		case 'P':
 			list.PrintAllStudents();
@@ -685,13 +702,14 @@ void Menu(StudentList& list) {
 
 			cout << endl << "Enter new first name: ";
 			cin >> firstname;
+			ValidateAlphaString(firstname);
 			cout << "Enter new last name: ";
-			cin >> lastname;
+			ValidateAlphaString(lastname);
 
 			cout << "Enter new Batch: ";
 			Inputvalidation(batch);
 			cout << "Enter new department: ";
-			cin >> department;
+			ValidateAlphaString(department);
 			cout << "Enter new cgpa: ";
 			cin >> cgpa;
 			list.UpdateStudentData(old, newno, firstname, lastname, batch, department, cgpa);
@@ -699,8 +717,10 @@ void Menu(StudentList& list) {
 		case 'D':
 			cout << endl << "Enter the roll number of the student you want to remove: ";
 			Inputvalidation(rollnumber);
+
 			list.DeleteStudent(rollnumber);
 		case 'E':
+			cout << endl << "Exiting....";
 			break;
 		}
 
@@ -709,13 +729,13 @@ void Menu(StudentList& list) {
 }
 
 int main() {
-	StudentList pp;
+	students pp;
 	Menu(pp);
 
 	return 0;
 }
 
-ostream& operator<<(ostream& os, const StudentList::StudentNode& obj)
+ostream& operator<<(ostream& os, const students::StudentNode& obj)
 {
 	os << endl << "First name: " << obj.firstname << endl << "Last name: " << obj.lastname;
 	os << endl << "Roll number: " << obj.rollnumber << endl << "Batch: " << obj.batch;
